@@ -1,5 +1,6 @@
 ﻿using ChatBotVK.Factories;
 using ChatBotVK.Models;
+using ChatBotVK.Commands;
 using Database.Models;
 using Database.Repositories;
 using VkNet;
@@ -16,13 +17,13 @@ namespace ChatBotVK.Services
         private readonly MessageCreaterService _messageCreaterService;
         private readonly ModelFactory _modelFactory;
         private readonly SessionService _sessionService;
-
+        private readonly Commands.Commands _commands;
         private readonly ILogger<VkService> _logger;
-        private readonly List<string> _listCommand;
+        //private readonly List<string> _listCommand;
 
         public VkService(VkApi vkApi, IRepository<Category> categoryRep, IRepository<Thing> thingRep,
             KeybordCreaterService keybordCreaterService, MessageCreaterService messageCreaterService,
-            ModelFactory modelFactory, SessionService sessionService, ILogger<VkService> logger)
+            ModelFactory modelFactory, SessionService sessionService, Commands.Commands commands, ILogger<VkService> logger)
         {
             _vkApi = vkApi;
             _categoryRep = categoryRep;
@@ -31,20 +32,23 @@ namespace ChatBotVK.Services
             _messageCreaterService = messageCreaterService;
             _modelFactory = modelFactory;
             _sessionService = sessionService;
+            _commands = commands;
             _logger = logger;
 
-            _listCommand = new List<string>()
-            {
-                "Бот",
-                "Начать",
-                "Список снаряжения",
-                "Полный список",
-                "Одежда",
-                "Оружие",
-                "Снаряжение",
-                "Бивачное снаряжение",
-                "Назад"
-            };
+            //_sessionService.ClearModel += ClearModel;
+
+            //_listCommand = new List<string>()
+            //{
+            //    "Бот",
+            //    "Начать",
+            //    "Список снаряжения",
+            //    "Полный список",
+            //    "Одежда",
+            //    "Оружие",
+            //    "Снаряжение",
+            //    "Бивачное снаряжение",
+            //    "Назад"
+            //};
         }
 
         public async Task SendAnswer(Models.Dtos.Message messageData)
@@ -59,16 +63,20 @@ namespace ChatBotVK.Services
             _logger.LogInformation($"User {userId} : {messageNew}");
             MessagesSendParams message;
 
-            if (_listCommand.Contains(messageNew))
+            _commands.IsMainCommans = _commands.MainCommands.Contains(messageNew);
+            _commands.IsEquipmentCommands = _commands.EquipmentCommands.Contains(messageNew);
+
+            if (_commands.IsMainCommans || _commands.IsEquipmentCommands)
             {
                 Model model;
                 model = _sessionService.GetModel(userId);
                 bool reset = false;
-                if (messageNew != "Назад")
+                if (messageNew != _commands.MainCommands[3])
                 {
                     if (model == null)
                     {
-                        var newModel = await _modelFactory.CreateModel("Начало", userId, model, _categoryRep, _thingRep);
+                        var newModel = await _modelFactory.CreateModel(_commands.MainCommands[1], 
+                            userId, model, _categoryRep, _thingRep);
                         model = newModel;
                         reset = model.IsEndPoint;
                     }
@@ -129,7 +137,18 @@ namespace ChatBotVK.Services
         private void SendMessage(MessagesSendParams message)
         {
             _vkApi.Messages.Send(message);
-            //Console.WriteLine($"Awnswer: {message.Message}");
         }
+
+        //private void ClearModel(object sender, ClearModelEvent e)
+        //{
+        //    if (e.Model != null)
+        //    {
+        //        if (e.Model.IsEndPoint)
+        //        {
+        //            return;
+        //        }
+        //        var message = _messageCreaterService
+        //    }
+        //}
     }
 }

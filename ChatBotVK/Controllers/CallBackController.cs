@@ -46,10 +46,14 @@ namespace ChatBotVK.Controllers
 
                 case "message_new":
                     {
+                        var str = JsonSerializer.Serialize(update);
                         await _vkService.SendAnswer(update.Object.Message);
                         break;
                     }
             }
+            // Возвращаем "ok" серверу Callback API
+
+            
             return Ok("ok");
         }
     }

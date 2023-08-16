@@ -10,11 +10,13 @@ namespace ChatBotVK.Factories
     public class ModelFactory
     {
         private readonly KeybordCreaterService _keybordCreaterService;
+        private readonly Commands.Commands _commands;
 
         //public object KeybordCreater { get; private set; }
-        public ModelFactory(KeybordCreaterService keybordCreaterService)
+        public ModelFactory(KeybordCreaterService keybordCreaterService, Commands.Commands commands)
         {
             _keybordCreaterService = keybordCreaterService;
+            _commands = commands;
         }
         public async Task<Model> CreateModel(string request, long userId, Model? parent,
             IRepository<Category> categoryRep, IRepository<Thing> thingRep)
@@ -26,55 +28,82 @@ namespace ChatBotVK.Factories
                 NameByttons = new List<string>(),
                 Childs = new List<Model>()
             };
-            switch (request)
+
+            if (_commands.IsMainCommans)
             {
-                case "Список снаряжения":
-                    {
-                        model.Message = "Какой список вам нужен?";
-                        var nameButtons = await categoryRep.GetAllAsync();
-                        foreach (var nameButton in nameButtons)
-                        {
-                            model.NameByttons.Add(nameButton.Name);
-                        }
-                        model.NameByttons.Add("Полный список");
-                        if (userId == 178084478)
-                        {
-                            model.NameByttons.Add("Добавить");
-                        }
-                        break;
-                    }
-                case "Полный список":
-                    {
-                        var things = await thingRep.GetAllAsync();
-                        model.Message = CreateListEquipment(things);
-                        model.IsEndPoint = true;
-                        break;
-                    }
-                case "Одежда":
-                case "Оружие":
-                case "Снаряжение":
-                case "Бивачное снаряжение":
-                    {
-                        var category = await categoryRep.GetAsync(x => x.Name == request);
-                        var things = await thingRep.GetAllAsync(x => x.CategotyId == category.Id);
-                        model.Message = CreateListEquipment(things);
-                        model.IsEndPoint = true;
-                        break;
-                    }
-                default:
-                    {
-                        model.Message = "Чем могу помочь?";
-                    }
-                    break;
+                if (request == _commands.MainCommands[0] || request == _commands.MainCommands[1])
+                {
+                    model.Message = "Чем могу помочь?";
+                }
+                if (request == _commands.MainCommands[2])
+                {
+                    model.Message = "Какой список вам нужен?";
+                    var nameButtons = await categoryRep.GetAllAsync();
+                    model.NameByttons.AddRange(_commands.EquipmentCommands);
+                }
             }
+            else if (_commands.IsEquipmentCommands)
+            {
+                if (request == _commands.EquipmentCommands[0])
+                {
+                    var things = await thingRep.GetAllAsync();
+                    model.Message = CreateListEquipment(things);
+                    model.IsEndPoint = true;
+                }
+                else
+                {
+                    var category = await categoryRep.GetAsync(x => x.Name == request);
+                    var things = await thingRep.GetAllAsync(x => x.CategotyId == category.Id);
+                    model.Message = CreateListEquipment(things);
+                    model.IsEndPoint = true;
+                }
+            }
+
+            //switch (request)
+            //{
+            //    //case "Список снаряжения":
+            //    //    {
+            //    //        model.Message = "Какой список вам нужен?";
+            //    //        var nameButtons = await categoryRep.GetAllAsync();
+            //    //        model.NameByttons.AddRange(_commands.EquipmentCommands);
+            //    //        if (userId == 178084478)
+            //    //        {
+            //    //            model.NameByttons.Add("Добавить");
+            //    //        }
+            //    //        break;
+            //    //    }
+            //    case "Полный список":
+            //        {
+            //            var things = await thingRep.GetAllAsync();
+            //            model.Message = CreateListEquipment(things);
+            //            model.IsEndPoint = true;
+            //            break;
+            //        }
+            //    case "Одежда":
+            //    case "Оружие":
+            //    case "Снаряжение":
+            //    case "Бивачное снаряжение":
+            //        {
+            //            var category = await categoryRep.GetAsync(x => x.Name == request);
+            //            var things = await thingRep.GetAllAsync(x => x.CategotyId == category.Id);
+            //            model.Message = CreateListEquipment(things);
+            //            model.IsEndPoint = true;
+            //            break;
+            //        }
+            //    default:
+            //        {
+            //            model.Message = "Чем могу помочь?";
+            //        }
+            //        break;
+            //}
 
             if (model.Parent == null || model.IsEndPoint)
             {
-                model.NameByttons.Add("Список снаряжения");
+                model.NameByttons.Add(_commands.MainCommands[2]);
             }
             else
             {
-                model.NameByttons.Add("Назад");
+                model.NameByttons.Add(_commands.MainCommands[3]);
             }
 
             if (model.NameByttons.Count > 0)
