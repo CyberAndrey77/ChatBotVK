@@ -8,13 +8,13 @@ namespace ChatBotVK.Models.Dtos
         /// <summary>
         /// Тип события
         /// </summary>
-        public string Type { get; set; }
+        public string? Type { get; set; }
 
         /// <summary>
         /// Объект, инициировавший событие
         /// Структура объекта зависит от типа уведомления
         /// </summary>
-        public JsonObject Object { get; set; }
+        public MessageDto? Object { get; set; }
 
         /// <summary>
         /// ID сообщества, в котором произошло событие

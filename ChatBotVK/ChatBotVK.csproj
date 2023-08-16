@@ -6,4 +6,13 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\CyberAndrey77\SunsetBot\Database\Database.csproj" />
+    <ProjectReference Include="..\..\CyberAndrey77\SunsetBot\VkNet\VkNet.csproj" />
+  </ItemGroup>
+
 </Project>
