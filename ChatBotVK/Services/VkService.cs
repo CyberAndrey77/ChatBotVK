@@ -3,14 +3,11 @@ using ChatBotVK.Models;
 using ChatBotVK.Commands;
 using Database.Models;
 using Database.Repositories;
-using VkNet;
-using VkNet.Model;
 
 namespace ChatBotVK.Services
 {
     public class VkService
     {
-        private readonly VkApi _vkApi;
         private readonly IRepository<Category> _categoryRep;
         private readonly IRepository<Thing> _thingRep;
         private readonly KeybordCreaterService _keybordCreaterService;
@@ -18,14 +15,15 @@ namespace ChatBotVK.Services
         private readonly ModelFactory _modelFactory;
         private readonly SessionService _sessionService;
         private readonly Commands.Commands _commands;
+        private readonly SenderMessageService _senderMessage;
         private readonly ILogger<VkService> _logger;
         //private readonly List<string> _listCommand;
 
-        public VkService(VkApi vkApi, IRepository<Category> categoryRep, IRepository<Thing> thingRep,
+        public VkService(IRepository<Category> categoryRep, IRepository<Thing> thingRep,
             KeybordCreaterService keybordCreaterService, MessageCreaterService messageCreaterService,
-            ModelFactory modelFactory, SessionService sessionService, Commands.Commands commands, ILogger<VkService> logger)
+            ModelFactory modelFactory, SessionService sessionService, Commands.Commands commands, 
+            SenderMessageService senderMessage, ILogger<VkService> logger)
         {
-            _vkApi = vkApi;
             _categoryRep = categoryRep;
             _thingRep = thingRep;
             _keybordCreaterService = keybordCreaterService;
@@ -33,6 +31,7 @@ namespace ChatBotVK.Services
             _modelFactory = modelFactory;
             _sessionService = sessionService;
             _commands = commands;
+            _senderMessage = senderMessage;
             _logger = logger;
         }
 
@@ -46,7 +45,7 @@ namespace ChatBotVK.Services
 
             long userId = messageData.FromId;
             _logger.LogInformation($"User {userId} : {messageNew}");
-            MessagesSendParams message;
+            MessageModel message;
 
             _commands.IsMainCommans = _commands.MainCommands.Contains(messageNew);
             _commands.IsEquipmentCommands = _commands.EquipmentCommands.Contains(messageNew);
@@ -93,7 +92,7 @@ namespace ChatBotVK.Services
 
                 _sessionService.SetModel(userId, model);
                 message = _messageCreaterService.CreateMessage(model, userId);
-                await SendMessage(message);
+                await _senderMessage.SendMessage(message);
                 if (reset)
                 {
                     while (model.Parent != null)
@@ -102,14 +101,9 @@ namespace ChatBotVK.Services
                     }
                     _sessionService.SetModel(userId, model);
                     message = _messageCreaterService.CreateMessage(model, userId);
-                    await SendMessage(message);
+                    await _senderMessage.SendMessage(message);
                 }
             }
-        }
-
-        private async Task SendMessage(MessagesSendParams message)
-        {
-            await Task.Run(() => { _vkApi.Messages.Send(message); });
         }
 
         //private void ClearModel(object sender, ClearModelEvent e)

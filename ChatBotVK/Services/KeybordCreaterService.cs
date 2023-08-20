@@ -1,69 +1,41 @@
-﻿using Database.Models;
-using VkNet.Enums.StringEnums;
-using VkNet.Model;
+﻿using ChatBotVK.Models;
+using ChatBotVK.Models.Enums;
+using Action = ChatBotVK.Models.Action;
+using Button = ChatBotVK.Models.Button;
 
 namespace ChatBotVK.Services
 {
     public class KeybordCreaterService
     {
-        public MessageKeyboardButtonAction CreateButton(string text, KeyboardButtonActionType type, string number)
+
+        public KeyboardModel CreateKeyboard(string[] nameButtons, ButtonType buttonType, bool inLine = false, bool isOneTime = false)
         {
-            return new MessageKeyboardButtonAction
+            var keyboard = new KeyboardModel
             {
-                Type = type,
-                Label = text,
-                Payload = "{\"button\": \"" + number + "\"}"
+                Inline = inLine,
+                OneTime = isOneTime
             };
-        }
 
-        public MessageKeyboardButtonAction[] CreateButtons(string[] nameButtons, KeyboardButtonActionType type)
-        {
             var count = nameButtons.Length;
-            var buttons = new MessageKeyboardButtonAction[count];
-            for (var i = 0; i < count; i++)
+            var listButtons = new List<Button[]>();
+            for (int i = 0; i < count; i++)
             {
-                buttons[i] = new MessageKeyboardButtonAction()
+                var buttons = new Button[1];
+                var button = new Button
                 {
-                    Type = type,
-                    Label = nameButtons[i],
+                    Action = new Action()
+                    {
+                        ButtonType = buttonType,
+                        Label = nameButtons[i],
+                    }
                 };
+                buttons[0] = button;
+                listButtons.Add(buttons);
             }
-            return buttons;
-        }
+            
 
-        public MessageKeyboardButtonAction[] CreateButtons(List<string> nameButtons, KeyboardButtonActionType type)
-        {
-            return CreateButtons(nameButtons.ToArray(), type);
-        }
-
-        public MessageKeyboard CreateKeyboard(MessageKeyboardButtonAction[] buttons)
-        {
-            var keyboardBuilder = new KeyboardBuilder();
-            foreach (var button in buttons)
-            {
-                keyboardBuilder.AddButton(button).AddLine();
-            }
-            return keyboardBuilder.Build();
-        }
-
-        public MessageKeyboard CreateKeyboard(List<MessageKeyboardButtonAction> buttons)
-        {
-            return CreateKeyboard(buttons.ToArray());
-        }
-
-        internal  MessageKeyboardButtonAction[] CreateButtons(Category[] nameButtons, KeyboardButtonActionType type)
-        {
-            var count = nameButtons.Length;
-            var buttons = new MessageKeyboardButtonAction[count];
-            for (var i = 0; i < count; i++)
-            {
-                buttons[i] = new MessageKeyboardButtonAction()
-                {
-                    Type = type,
-                    Label = nameButtons[i].Name,
-                };
-            }
-            return buttons;
+            keyboard.Buttons = listButtons;
+            return keyboard;
         }
     }
 }

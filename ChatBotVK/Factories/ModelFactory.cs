@@ -3,7 +3,6 @@ using ChatBotVK.Services;
 using Database.Models;
 using Database.Repositories;
 using System.Text;
-using VkNet.Enums.StringEnums;
 
 namespace ChatBotVK.Factories
 {
@@ -70,8 +69,7 @@ namespace ChatBotVK.Factories
 
             if (model.NameByttons.Count > 0)
             {
-                var buttons = _keybordCreaterService.CreateButtons(model.NameByttons.ToArray(), KeyboardButtonActionType.Text);
-                model.Keyboard = _keybordCreaterService.CreateKeyboard(buttons);
+                model.Keyboard = _keybordCreaterService.CreateKeyboard(model.NameByttons.ToArray(), Models.Enums.ButtonType.Text);
             }
             return model;
         }

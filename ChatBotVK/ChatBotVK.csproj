@@ -12,7 +12,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\CyberAndrey77\SunsetBot\Database\Database.csproj" />
-    <ProjectReference Include="..\..\CyberAndrey77\SunsetBot\VkNet\VkNet.csproj" />
   </ItemGroup>
 
 </Project>
