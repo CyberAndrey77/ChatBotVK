@@ -34,21 +34,6 @@ namespace ChatBotVK.Services
             _sessionService = sessionService;
             _commands = commands;
             _logger = logger;
-
-            //_sessionService.ClearModel += ClearModel;
-
-            //_listCommand = new List<string>()
-            //{
-            //    "Бот",
-            //    "Начать",
-            //    "Список снаряжения",
-            //    "Полный список",
-            //    "Одежда",
-            //    "Оружие",
-            //    "Снаряжение",
-            //    "Бивачное снаряжение",
-            //    "Назад"
-            //};
         }
 
         public async Task SendAnswer(Models.Dtos.Message messageData)
@@ -73,14 +58,16 @@ namespace ChatBotVK.Services
                 bool reset = false;
                 if (messageNew != _commands.MainCommands[3])
                 {
-                    if (model == null)
+                    if(model == null)
                     {
-                        var newModel = await _modelFactory.CreateModel(_commands.MainCommands[1], 
+                        _commands.IsMainCommans = true; 
+                        _commands.IsEquipmentCommands = false;
+                        var newModel = await _modelFactory.CreateModel(_commands.MainCommands[1],
                             userId, model, _categoryRep, _thingRep);
                         model = newModel;
                         reset = model.IsEndPoint;
                     }
-                    else if (model.Childs?.Count != 0)
+                    else
                     {
                         var childModel = model.Childs.FirstOrDefault(x => x.NameModel == messageNew);
                         if (childModel == null)
@@ -91,17 +78,10 @@ namespace ChatBotVK.Services
                         model = childModel;
                         reset = model.IsEndPoint;
                     }
-                    else
-                    {
-                        var newModel = await _modelFactory.CreateModel(messageNew, userId, model, _categoryRep, _thingRep);
-                        model.Childs.Add(newModel);
-                        model = newModel;
-                        reset = model.IsEndPoint;
-                    }
                 }
                 else
                 {
-                    if (model != null)
+                    if (model?.Parent != null)
                     {
                         model = model.Parent;
                     }
@@ -113,30 +93,23 @@ namespace ChatBotVK.Services
 
                 _sessionService.SetModel(userId, model);
                 message = _messageCreaterService.CreateMessage(model, userId);
-                SendMessage(message);
+                await SendMessage(message);
                 if (reset)
                 {
-                    while (true)
+                    while (model.Parent != null)
                     {
-                        if (model.Parent != null)
-                        {
-                            model = model.Parent;
-                        }
-                        else
-                        {
-                            break;
-                        }
+                        model = model.Parent;
                     }
                     _sessionService.SetModel(userId, model);
                     message = _messageCreaterService.CreateMessage(model, userId);
-                    SendMessage(message);
+                    await SendMessage(message);
                 }
             }
         }
 
-        private void SendMessage(MessagesSendParams message)
+        private async Task SendMessage(MessagesSendParams message)
         {
-            _vkApi.Messages.Send(message);
+            await Task.Run(() => { _vkApi.Messages.Send(message); });
         }
 
         //private void ClearModel(object sender, ClearModelEvent e)

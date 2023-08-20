@@ -55,4 +55,4 @@ using (var scope = app.Services.CreateScope())
     commans.FillEquipmentCommands(categoryRepos);
 }
 
-app.Run();
+app.Run("https://localhost:7234");

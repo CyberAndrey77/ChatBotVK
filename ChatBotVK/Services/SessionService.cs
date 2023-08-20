@@ -1,5 +1,6 @@
 ﻿using ChatBotVK.Events;
 using ChatBotVK.Models;
+using System.Collections.Generic;
 using System.Security.Principal;
 using System.Timers;
 
@@ -9,12 +10,12 @@ namespace ChatBotVK.Services
     {
         //public delegate void ClearModelHandler(object sender, ClearModelEvent e);
         //public event ClearModelHandler ClearModel;
-        private readonly List<Session> _listModels;
+        private readonly Dictionary<long, Session> _listModels;
         private readonly System.Timers.Timer _timer;
 
         public SessionService()
         {
-            _listModels = new List<Session>();
+            _listModels = new Dictionary<long, Session>();
             _timer = new System.Timers.Timer(1800000);
             _timer.Elapsed += OnTimedEvent;
             _timer.AutoReset = true;
@@ -23,30 +24,43 @@ namespace ChatBotVK.Services
 
         public void SetModel(long userId, Model currentModel)
         {
-            var session = _listModels.FirstOrDefault(x => x.UserId == userId);
-            if (session == null)
+            if (!_listModels.TryGetValue(userId, out var session))
             {
                 session = new Session { LastModel = currentModel, LastRequest = DateTime.Now, UserId = userId };
-                _listModels.Add(session);
+                _listModels.Add(userId, session);
+            }
+            else
+            {
+                session.LastModel = currentModel;
+                session.LastRequest = DateTime.Now;
             }
         }
 
         public Model? GetModel(long userId)
         {
-            return _listModels.FirstOrDefault(x => x.UserId == userId)?.LastModel;
+            if (_listModels.TryGetValue(userId, out var session))
+            {
+                return session.LastModel;
+            }
+            return null;
         }
 
         private void OnTimedEvent(object? sender, ElapsedEventArgs e)
         {
-            for (int i = 0; i < _listModels.Count; i++)
+            var listRemove = new List<long>();
+            foreach (var session in _listModels.Values)
             {
-                if (DateTime.Now - _listModels[i].LastRequest > TimeSpan.FromMinutes(30))
+                if (DateTime.Now - session.LastRequest > TimeSpan.FromMinutes(30))
                 {
-                    //ClearModel?.Invoke(this, new ClearModelEvent(_listModels[i].UserId, GetModel(_listModels[i].UserId)));
-                    _listModels.RemoveAt(i);
-                    i--;
+                    listRemove.Add(session.UserId);
                 }
             }
+
+            for (int i = 0; i < listRemove.Count; i++)
+            {
+                _listModels.Remove(listRemove[i]);
+            }
+            listRemove.Clear();
         }
     }
 }

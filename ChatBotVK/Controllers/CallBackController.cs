@@ -35,26 +35,29 @@ namespace ChatBotVK.Controllers
         [HttpPost]
         public async Task<IActionResult> Callback(UpdateDto update)
         {
-            _logger.LogInformation($"Новый запрос {update.Type}");
-            // Проверяем, что находится в поле "type" 
-            switch (update.Type)
+            try
             {
-                // Если это уведомление для подтверждения адреса
-                case "confirmation":
-                    // Отправляем строку для подтверждения 
-                    return Ok("dd92e280");
+                _logger.LogInformation($"Новый запрос {update.Type}");
+                switch (update.Type)
+                {
+                    case "confirmation":
+                        return Ok("dd92e280");
 
-                case "message_new":
-                    {
-                        var str = JsonSerializer.Serialize(update);
-                        await _vkService.SendAnswer(update.Object.Message);
-                        break;
-                    }
+                    case "message_new":
+                        {
+                            var str = JsonSerializer.Serialize(update);
+                            await _vkService.SendAnswer(update.Object.Message);
+                            break;
+                        }
+                }
             }
-            // Возвращаем "ok" серверу Callback API
+            catch (Exception ex)
+            {
+                _logger.LogError($"Ошибка в запросе {update.Type} : {ex.Message}");
+            }
 
-            
             return Ok("ok");
+
         }
     }
 }

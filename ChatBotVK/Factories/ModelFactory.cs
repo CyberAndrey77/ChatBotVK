@@ -59,44 +59,6 @@ namespace ChatBotVK.Factories
                 }
             }
 
-            //switch (request)
-            //{
-            //    //case "Список снаряжения":
-            //    //    {
-            //    //        model.Message = "Какой список вам нужен?";
-            //    //        var nameButtons = await categoryRep.GetAllAsync();
-            //    //        model.NameByttons.AddRange(_commands.EquipmentCommands);
-            //    //        if (userId == 178084478)
-            //    //        {
-            //    //            model.NameByttons.Add("Добавить");
-            //    //        }
-            //    //        break;
-            //    //    }
-            //    case "Полный список":
-            //        {
-            //            var things = await thingRep.GetAllAsync();
-            //            model.Message = CreateListEquipment(things);
-            //            model.IsEndPoint = true;
-            //            break;
-            //        }
-            //    case "Одежда":
-            //    case "Оружие":
-            //    case "Снаряжение":
-            //    case "Бивачное снаряжение":
-            //        {
-            //            var category = await categoryRep.GetAsync(x => x.Name == request);
-            //            var things = await thingRep.GetAllAsync(x => x.CategotyId == category.Id);
-            //            model.Message = CreateListEquipment(things);
-            //            model.IsEndPoint = true;
-            //            break;
-            //        }
-            //    default:
-            //        {
-            //            model.Message = "Чем могу помочь?";
-            //        }
-            //        break;
-            //}
-
             if (model.Parent == null || model.IsEndPoint)
             {
                 model.NameByttons.Add(_commands.MainCommands[2]);
