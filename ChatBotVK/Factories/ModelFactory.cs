@@ -1,9 +1,11 @@
-﻿using ChatBotVK.Models;
+﻿using ChatBotVK.Commands;
+using ChatBotVK.Models;
 using ChatBotVK.Models.Actions;
 using ChatBotVK.Models.Buttons;
 using ChatBotVK.Services;
 using Database.Models;
 using Database.Repositories;
+using System.Net.Mail;
 using System.Text;
 
 namespace ChatBotVK.Factories
@@ -11,11 +13,11 @@ namespace ChatBotVK.Factories
     public class ModelFactory
     {
         private readonly KeybordCreaterService _keybordCreaterService;
-        private readonly Commands.Commands _commands;
+        private readonly Command _commands;
         private readonly PhotoLoaderService _photoLoader;
 
         //public object KeybordCreater { get; private set; }
-        public ModelFactory(KeybordCreaterService keybordCreaterService, Commands.Commands commands, 
+        public ModelFactory(KeybordCreaterService keybordCreaterService, Command commands, 
             PhotoLoaderService photoLoader)
         {
             _keybordCreaterService = keybordCreaterService;
@@ -23,7 +25,7 @@ namespace ChatBotVK.Factories
             _photoLoader = photoLoader;
         }
         public async Task<Model> CreateModel(string message, long userId, Model? parent,
-            IRepository<Category> categoryRep, IRepository<Thing> thingRep)
+            IRepository<Category> categoryRep, IRepository<Thing> thingRep, EnumCommand command)
         {
             var model = new Model
             {
@@ -33,50 +35,50 @@ namespace ChatBotVK.Factories
                 Childs = new List<Model>()
             };
 
-            if (_commands.IsMainCommans)
+            switch (command)
             {
-                if (message == _commands.MainCommands[0] || message == _commands.MainCommands[1])
-                {
+                case EnumCommand.Bot:
+                case EnumCommand.Start:
                     model.Message = "Чем могу помочь?";
-                }
-                if (message == _commands.MainCommands[2])
+                    break;
+                case EnumCommand.EquipmentList:
                 {
                     model.Message = "Какой список вам нужен?";
                     var nameButtons = await categoryRep.GetAllAsync();
-                    model.NameByttons.AddRange(_commands.EquipmentCommands);
+                    model.NameByttons.AddRange(AddButtons(_commands));
+                    break;
                 }
-            }
-            else if (_commands.IsEquipmentCommands)
-            {
-                var attachments = new StringBuilder();
-                if (message == _commands.EquipmentCommands[0])
+                case EnumCommand.FullEquipmentList:
                 {
+                    var attachments = new StringBuilder();
                     var things = await thingRep.GetAllAsync();
                     model.Message = await CreateListEquipment(things, thingRep, attachments);
                     model.IsEndPoint = true;
+                    model.Attachments = attachments.ToString();
+                    break;
                 }
-                else
+                case EnumCommand.Equipment:
+                case EnumCommand.Clothes:
+                case EnumCommand.Weapon:
+                case EnumCommand.EquipmentCamp:
                 {
+                    var attachments = new StringBuilder();
                     var category = await categoryRep.GetAsync(x => x.Name == message);
                     var things = await thingRep.GetAllAsync(x => x.CategotyId == category.Id);
                     model.Message = await CreateListEquipment(things, thingRep, attachments);
                     model.IsEndPoint = true;
+                    model.Attachments = attachments.ToString();
+                    break;
                 }
-                //var category = await categoryRep.GetAsync(x => x.Name == message);
-                //var things = await thingRep.GetAllAsync(x => x.CategotyId == category.Id);
-                //model.Message = $"{message}";
-                //model.Template = CreateListEquipment(things);
-                //model.IsEndPoint = true;
-                model.Attachments = attachments.ToString();
             }
 
             if (model.Parent == null || model.IsEndPoint)
             {
-                model.NameByttons.Add(_commands.MainCommands[2]);
+                model.NameByttons.Add(_commands.MainCommands.First(x => x.Value == EnumCommand.EquipmentList).Key);
             }
             else
             {
-                model.NameByttons.Add(_commands.MainCommands[3]);
+                model.NameByttons.Add(_commands.MainCommands.First(x => x.Value == EnumCommand.Back).Key);
             }
 
             if (model.NameByttons.Count > 0)
@@ -85,6 +87,23 @@ namespace ChatBotVK.Factories
                     Models.Enums.ButtonType.text);
             }
             return model;
+        }
+
+        private List<string> AddButtons(Command command)
+        {
+            var buttons = new List<string>();
+            if (command.IsMainCommans)
+            {
+                foreach (var item in command.EquipmentCommands)
+                {
+                    buttons.Add(item.Key);
+                }
+            }
+            else if (command.IsEquipmentCommands)
+            {
+                
+            }
+            return buttons;
         }
 
         //private TemplateModel CreateListEquipment(IEnumerable<Thing> things)

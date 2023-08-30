@@ -13,7 +13,7 @@ namespace ChatBotVK.Services
         private readonly MessageCreaterService _messageCreaterService;
         private readonly ModelFactory _modelFactory;
         private readonly SessionService _sessionService;
-        private readonly Commands.Commands _commands;
+        private readonly Commands.Command _commands;
         private readonly SenderMessageService _senderMessage;
         private readonly ILogger<VkService> _logger;
 
@@ -21,7 +21,7 @@ namespace ChatBotVK.Services
 
         public VkService(IRepository<Category> categoryRep, IRepository<Thing> thingRep,
             KeybordCreaterService keybordCreaterService, MessageCreaterService messageCreaterService,
-            ModelFactory modelFactory, SessionService sessionService, Commands.Commands commands, 
+            ModelFactory modelFactory, SessionService sessionService, Commands.Command commands, 
             SenderMessageService senderMessage, ILogger<VkService> logger)
         {
             _categoryRep = categoryRep;
@@ -46,22 +46,25 @@ namespace ChatBotVK.Services
             _logger.LogInformation($"User {userId} : {messageNew}");
             MessageModel message;
 
-            _commands.IsMainCommans = _commands.MainCommands.Contains(messageNew);
-            _commands.IsEquipmentCommands = _commands.EquipmentCommands.Contains(messageNew);
+            
+            _commands.IsMainCommans = _commands.MainCommands.TryGetValue(messageNew, out var command);
+            _commands.IsEquipmentCommands = _commands.IsMainCommans ?
+                 false :
+                _commands.EquipmentCommands.TryGetValue(messageNew, out command);
 
             if (_commands.IsMainCommans || _commands.IsEquipmentCommands)
             {
                 Model model;
                 model = _sessionService.GetModel(userId);
                 bool reset = false;
-                if (messageNew != _commands.MainCommands[3])
+                if (command != EnumCommand.Back)
                 {
                     if(model == null)
                     {
                         _commands.IsMainCommans = true; 
                         _commands.IsEquipmentCommands = false;
-                        var newModel = await _modelFactory.CreateModel(_commands.MainCommands[1],
-                            userId, model, _categoryRep, _thingRep);
+                        var newModel = await _modelFactory.CreateModel(messageNew,
+                            userId, model, _categoryRep, _thingRep, command);
                         model = newModel;
                         reset = model.IsEndPoint;
                     }
@@ -70,7 +73,8 @@ namespace ChatBotVK.Services
                         var childModel = model.Childs.FirstOrDefault(x => x.NameModel == messageNew);
                         if (childModel == null)
                         {
-                            childModel = await _modelFactory.CreateModel(messageNew, userId, model, _categoryRep, _thingRep);
+                            childModel = await _modelFactory.CreateModel(messageNew, userId, model, 
+                                _categoryRep, _thingRep, command);
                             model.Childs.Add(childModel);
                         }
                         model = childModel;

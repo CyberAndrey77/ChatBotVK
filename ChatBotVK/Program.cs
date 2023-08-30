@@ -25,7 +25,7 @@ builder.Services.AddSingleton<PhotoLoaderService>();
 builder.Services.AddLogging();
 builder.Services.AddScoped<IRepository<Category>, CategoryRepository>();
 builder.Services.AddScoped<IRepository<Thing>, ThingRepository>();
-builder.Services.AddSingleton<Commands>();
+builder.Services.AddSingleton<Command>();
 builder.Services.AddScoped<KeybordCreaterService>();
 builder.Services.AddScoped<MessageCreaterService>();
 builder.Services.AddScoped<ModelFactory>();
@@ -47,12 +47,5 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
-
-using (var scope = app.Services.CreateScope())
-{
-    var commans = scope.ServiceProvider.GetRequiredService<Commands>();
-    var categoryRepos = scope.ServiceProvider.GetRequiredService<IRepository<Category>>();
-    commans.FillEquipmentCommands(categoryRepos);
-}
 app.UseMiddleware<Handler>();
 app.Run("https://localhost:7234");
