@@ -8,6 +8,8 @@ namespace ChatBotVK.Models
         public int RandomId { get; set; }
         public string Message { get; set; }
         public KeyboardModel? Keyboard { get; set; }
+        public TemplateModel? Template { get; set; }
+        public string? Attachments { get; set; }
 
         public override string ToString()
         {
@@ -18,6 +20,10 @@ namespace ChatBotVK.Models
             if ( Keyboard != null )
             {
                 stringBuilder.Append($"keyboard={Keyboard.ToString()}");
+            }
+            if ( Template != null )
+            {
+                stringBuilder.Append($"template={Template.ToString()}");
             }
             return stringBuilder.ToString();
         }

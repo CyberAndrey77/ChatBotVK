@@ -1,4 +1,5 @@
 ﻿using System.Linq.Expressions;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace ChatBotVK.Models
@@ -9,7 +10,12 @@ namespace ChatBotVK.Models
         public string Type { get; set; } = "carousel";
 
         [JsonPropertyName("elements")]
-        public Element[] Elements { get; set; }
+        public List<Element> Elements { get; set; }
+
+        public override string ToString()
+        {
+            return JsonSerializer.Serialize(this);
+        }
     }
 
     public class Element
@@ -21,10 +27,10 @@ namespace ChatBotVK.Models
         public string Description { get; set; }
 
         [JsonPropertyName("buttons")]
-        public Button[] Buttons { get; set; }
+        public List<Button> Buttons { get; set; }
 
         [JsonPropertyName("photo_id")]
-        public long PhotoId { get; set; }
+        public string PhotoId { get; set; }
 
         [JsonPropertyName("action")]
         public PhotoAction Action { get; set; }

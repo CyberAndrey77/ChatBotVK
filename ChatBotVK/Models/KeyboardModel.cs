@@ -1,4 +1,5 @@
-﻿using ChatBotVK.Models.Enums;
+﻿using ChatBotVK.Models.Buttons;
+using ChatBotVK.Models.Enums;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -24,30 +25,6 @@ namespace ChatBotVK.Models
     public class Button
     {
         [JsonPropertyName("action")]
-        public Action Action { get; set; }
-    }
-
-    public class Action
-    {
-        private ButtonType _buttonType;
-        private string _type;
-
-        [JsonIgnore]
-        public ButtonType ButtonType { get => _buttonType; 
-            set
-            {
-                _buttonType = value;
-                _type = _buttonType.ToString().ToLower();
-            }
-        }
-
-        [JsonPropertyName("type")]
-        public string Type => _type ?? string.Empty;
-
-        [JsonPropertyName("label")]
-        public string Label { get; set; }
-
-        [JsonPropertyName("payload")]
-        public string Payload { get; set; }
+        public BaseAction Action { get; set; }
     }
 }

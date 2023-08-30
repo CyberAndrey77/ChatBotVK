@@ -2,7 +2,8 @@
 {
     public enum ButtonType
     {
-        Text,
-        Callback
+        text,
+        callback,
+        open_link
     }
 }

@@ -10,13 +10,13 @@ namespace ChatBotVK.Services
     {
         private readonly IRepository<Category> _categoryRep;
         private readonly IRepository<Thing> _thingRep;
-        private readonly KeybordCreaterService _keybordCreaterService;
         private readonly MessageCreaterService _messageCreaterService;
         private readonly ModelFactory _modelFactory;
         private readonly SessionService _sessionService;
         private readonly Commands.Commands _commands;
         private readonly SenderMessageService _senderMessage;
         private readonly ILogger<VkService> _logger;
+
         //private readonly List<string> _listCommand;
 
         public VkService(IRepository<Category> categoryRep, IRepository<Thing> thingRep,
@@ -26,7 +26,6 @@ namespace ChatBotVK.Services
         {
             _categoryRep = categoryRep;
             _thingRep = thingRep;
-            _keybordCreaterService = keybordCreaterService;
             _messageCreaterService = messageCreaterService;
             _modelFactory = modelFactory;
             _sessionService = sessionService;

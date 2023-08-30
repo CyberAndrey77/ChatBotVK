@@ -1,6 +1,6 @@
 ﻿using ChatBotVK.Models;
+using ChatBotVK.Models.Buttons;
 using ChatBotVK.Models.Enums;
-using Action = ChatBotVK.Models.Action;
 using Button = ChatBotVK.Models.Button;
 
 namespace ChatBotVK.Services
@@ -23,7 +23,7 @@ namespace ChatBotVK.Services
                 var buttons = new Button[1];
                 var button = new Button
                 {
-                    Action = new Action()
+                    Action = new BaseAction()
                     {
                         ButtonType = buttonType,
                         Label = nameButtons[i],

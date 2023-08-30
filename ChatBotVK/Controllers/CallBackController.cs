@@ -32,7 +32,7 @@ namespace ChatBotVK.Controllers
                 switch (update.Type)
                 {
                     case "confirmation":
-                        return Ok("dd92e280");
+                        return Ok("414578b8");
 
                     case "message_new":
                         {

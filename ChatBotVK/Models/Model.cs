@@ -10,5 +10,7 @@
         public bool IsEndPoint { get; set; }
         //public List<MessageModel> Messages { get; set; }
         public string Message { get; set; }
+        public TemplateModel? Template { get; set; }
+        public string? Attachments { get; set; }
     }
 }

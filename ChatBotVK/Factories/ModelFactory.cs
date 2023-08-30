@@ -1,4 +1,6 @@
 ﻿using ChatBotVK.Models;
+using ChatBotVK.Models.Actions;
+using ChatBotVK.Models.Buttons;
 using ChatBotVK.Services;
 using Database.Models;
 using Database.Repositories;
@@ -10,19 +12,22 @@ namespace ChatBotVK.Factories
     {
         private readonly KeybordCreaterService _keybordCreaterService;
         private readonly Commands.Commands _commands;
+        private readonly PhotoLoaderService _photoLoader;
 
         //public object KeybordCreater { get; private set; }
-        public ModelFactory(KeybordCreaterService keybordCreaterService, Commands.Commands commands)
+        public ModelFactory(KeybordCreaterService keybordCreaterService, Commands.Commands commands, 
+            PhotoLoaderService photoLoader)
         {
             _keybordCreaterService = keybordCreaterService;
             _commands = commands;
+            _photoLoader = photoLoader;
         }
-        public async Task<Model> CreateModel(string request, long userId, Model? parent,
+        public async Task<Model> CreateModel(string message, long userId, Model? parent,
             IRepository<Category> categoryRep, IRepository<Thing> thingRep)
         {
             var model = new Model
             {
-                NameModel = request,
+                NameModel = message,
                 Parent = parent,
                 NameByttons = new List<string>(),
                 Childs = new List<Model>()
@@ -30,11 +35,11 @@ namespace ChatBotVK.Factories
 
             if (_commands.IsMainCommans)
             {
-                if (request == _commands.MainCommands[0] || request == _commands.MainCommands[1])
+                if (message == _commands.MainCommands[0] || message == _commands.MainCommands[1])
                 {
                     model.Message = "Чем могу помочь?";
                 }
-                if (request == _commands.MainCommands[2])
+                if (message == _commands.MainCommands[2])
                 {
                     model.Message = "Какой список вам нужен?";
                     var nameButtons = await categoryRep.GetAllAsync();
@@ -43,19 +48,26 @@ namespace ChatBotVK.Factories
             }
             else if (_commands.IsEquipmentCommands)
             {
-                if (request == _commands.EquipmentCommands[0])
+                var attachments = new StringBuilder();
+                if (message == _commands.EquipmentCommands[0])
                 {
                     var things = await thingRep.GetAllAsync();
-                    model.Message = CreateListEquipment(things);
+                    model.Message = await CreateListEquipment(things, thingRep, attachments);
                     model.IsEndPoint = true;
                 }
                 else
                 {
-                    var category = await categoryRep.GetAsync(x => x.Name == request);
+                    var category = await categoryRep.GetAsync(x => x.Name == message);
                     var things = await thingRep.GetAllAsync(x => x.CategotyId == category.Id);
-                    model.Message = CreateListEquipment(things);
+                    model.Message = await CreateListEquipment(things, thingRep, attachments);
                     model.IsEndPoint = true;
                 }
+                //var category = await categoryRep.GetAsync(x => x.Name == message);
+                //var things = await thingRep.GetAllAsync(x => x.CategotyId == category.Id);
+                //model.Message = $"{message}";
+                //model.Template = CreateListEquipment(things);
+                //model.IsEndPoint = true;
+                model.Attachments = attachments.ToString();
             }
 
             if (model.Parent == null || model.IsEndPoint)
@@ -69,70 +81,70 @@ namespace ChatBotVK.Factories
 
             if (model.NameByttons.Count > 0)
             {
-                model.Keyboard = _keybordCreaterService.CreateKeyboard(model.NameByttons.ToArray(), Models.Enums.ButtonType.Text);
+                model.Keyboard = _keybordCreaterService.CreateKeyboard(model.NameByttons.ToArray(),
+                    Models.Enums.ButtonType.text);
             }
             return model;
         }
 
-        //private static List<MessageModel> CreateListEquipment(IEnumerable<Thing> things)
+        //private TemplateModel CreateListEquipment(IEnumerable<Thing> things)
         //{
-        //    var messageModels = new List<MessageModel>();
-        //    var messageEquip = new StringBuilder();
-        //    var model = new MessageModel();
+        //    var template = new TemplateModel
+        //    {
+        //        Elements = new List<Element>(things.Count())
+        //    };
         //    foreach (var thing in things)
         //    {
-
-        //        var link = thing.Link;
-        //        var cost = thing.Cost;
-        //        var isMust = thing.IsMust;
-
-        //        messageEquip.AppendLine(thing.Name);
-        //        messageEquip.AppendLine(thing.Description);
-        //        if (link != null)
+        //        var element = new Element
         //        {
-        //            messageEquip.AppendLine($"Ссылка на вещь в магазине {link}");
-        //        }
-        //        if (cost != null)
+        //            Title = thing.Name
+        //        };
+        //        var must = thing.IsMust ? "Обязательно" : "Необязательно";
+        //        var description = $"{thing.Description}\n{must}";
+        //        element.Description = description;
+        //        if (!string.IsNullOrEmpty(thing.Link))
         //        {
-        //            messageEquip.AppendLine($"Цена {cost} рублей");
-        //        }
-        //        messageEquip.AppendLine(isMust ? "Обязательно" : "По желанию");
-        //        if (thing.ImgPath != null)
-        //        {
-        //            model.ImgPath ??= new List<string>();
-        //            model.ImgPath.Add(thing.ImgPath);
-        //            if (thing.PhotoId != null)
+        //            element.Buttons ??= new List<Button>();
+        //            element.Buttons.Add(new Button
         //            {
-        //                model.PhotoId ??= new List<ulong>();
-        //                model.OwnerPhotoId ??= new List<ulong>();
+        //                Action = new LinkAction
+        //                {
+        //                    ButtonType = Models.Enums.ButtonType.open_link,
+        //                    Link = thing.Link,
+        //                    Label = thing.Cost.ToString()
+        //                }
+        //            }); 
+        //        }
+        //        else
+        //        {
+        //            element.Buttons ??= new List<Button>();
+        //            element.Buttons.Add(new Button
+        //            {
+        //                Action = new BaseAction
+        //                {
+        //                    ButtonType = Models.Enums.ButtonType.text,
+        //                    Label = "Нет ссылки"
+        //                }
+        //            }); ;
+        //        }
+        //        if (!string.IsNullOrEmpty(thing.ImgPath))
+        //        {
+        //            if (string.IsNullOrEmpty(thing.ImgUrl))
+        //            {
 
-        //                model.PhotoId.Add((ulong)thing.PhotoId);
-        //                model.OwnerPhotoId.Add((ulong)thing.OwnerPhotoId);
         //            }
         //        }
-        //        messageEquip.AppendLine();
-        //        model.Message = messageEquip.ToString();
-        //        messageModels.Add(model);
-        //        messageEquip.Clear();
-        //        model = new MessageModel();
+        //        template.Elements.Add(element);
         //    }
-
-        //    if (messageModels.Count == 0)
-        //    {
-        //        model = new MessageModel();
-        //        messageEquip.Append("Список пуст");
-        //        model.Message = messageEquip.ToString();
-        //        messageModels.Add(model);
-        //    }
-        //    return messageModels;
+        //    return template;
         //}
 
-        private string CreateListEquipment(IEnumerable<Thing> things)
+        private async Task<string> CreateListEquipment(IEnumerable<Thing> things, IRepository<Thing> repository,
+            StringBuilder attachments)
         {
             var messageEquip = new StringBuilder();
             foreach (var thing in things)
             {
-
                 var link = thing.Link;
                 var cost = thing.Cost;
                 var isMust = thing.IsMust;
@@ -147,6 +159,15 @@ namespace ChatBotVK.Factories
                 {
                     messageEquip.AppendLine($"Цена {cost} рублей");
                 }
+                if (thing.ImgPath != null)
+                {
+                    if (thing.OwnerPhotoId == null)
+                    {
+                        await UploadPhoto(thing, repository);
+                    }
+                    attachments.Append($"photo{thing.OwnerPhotoId}_{thing.PhotoId},");
+
+                }
                 messageEquip.AppendLine(isMust ? "Обязательно" : "По желанию");
 
                 messageEquip.AppendLine();
@@ -156,7 +177,18 @@ namespace ChatBotVK.Factories
             {
                 messageEquip.Append("Список пуст");
             }
+
             return messageEquip.ToString();
+        }
+
+        private async Task<Thing> UploadPhoto(Thing thing, IRepository<Thing> repository)
+        {
+            var photoData = await _photoLoader.UploadPhotoToVk(thing.ImgPath);
+            var photo = photoData.Responces.First();
+            thing.OwnerPhotoId = photo.OwnerId;
+            thing.PhotoId = photo.PhotoId;
+            await repository.UpdateAsync(thing);
+            return thing;
         }
     }
 }

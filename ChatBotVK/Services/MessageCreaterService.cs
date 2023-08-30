@@ -22,6 +22,14 @@ namespace ChatBotVK.Services
             {
                 newMessage.Keyboard = model.Keyboard;
             }
+            if (model.Template != null)
+            {
+                newMessage.Template = model.Template;
+            }
+            if (model.Attachments != null)
+            {
+                newMessage.Attachments = model.Attachments;
+            }
             return newMessage;
         }
     }

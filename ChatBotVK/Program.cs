@@ -1,20 +1,27 @@
 using ChatBotVK.Commands;
 using ChatBotVK.Factories;
+using ChatBotVK.Midellwares;
 using ChatBotVK.Services;
 using Database.Models;
 using Database.Repositories;
+using JorgeSerrano.Json;
 using Microsoft.EntityFrameworkCore;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-builder.Services.AddControllers();
+builder.Services.AddControllers().AddJsonOptions(x =>
+        {
+            x.JsonSerializerOptions.PropertyNamingPolicy = new JsonSnakeCaseNamingPolicy();
+        });;
 builder.Services.AddSwaggerGen();
 
 string connection = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<DatabaseContext>(options => options.UseNpgsql(connection));
 builder.Services.AddHttpClient();
 builder.Services.AddSingleton<SenderMessageService>();
+builder.Services.AddSingleton<PhotoLoaderService>();
 builder.Services.AddLogging();
 builder.Services.AddScoped<IRepository<Category>, CategoryRepository>();
 builder.Services.AddScoped<IRepository<Thing>, ThingRepository>();
@@ -47,5 +54,5 @@ using (var scope = app.Services.CreateScope())
     var categoryRepos = scope.ServiceProvider.GetRequiredService<IRepository<Category>>();
     commans.FillEquipmentCommands(categoryRepos);
 }
-
+app.UseMiddleware<Handler>();
 app.Run("https://localhost:7234");
