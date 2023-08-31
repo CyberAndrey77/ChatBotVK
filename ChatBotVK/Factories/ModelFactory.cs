@@ -25,7 +25,8 @@ namespace ChatBotVK.Factories
             _photoLoader = photoLoader;
         }
         public async Task<Model> CreateModel(string message, long userId, Model? parent,
-            IRepository<Category> categoryRep, IRepository<Thing> thingRep, IRepository<User> userRep, EnumCommand command)
+            IRepository<Category> categoryRep, IRepository<Thing> thingRep, 
+            IRepository<User> userRep, IRepository<Equipment> equipmentRep, EnumCommand command)
         {
             var model = new Model
             {
@@ -62,13 +63,22 @@ namespace ChatBotVK.Factories
                 case EnumCommand.Weapon:
                 case EnumCommand.EquipmentCamp:
                 {
-                    var attachments = new StringBuilder();
-                    var category = await categoryRep.GetAsync(x => x.Name == message);
-                    var things = await thingRep.GetAllAsync(x => x.CategotyId == category.Id);
-                    model.Message = await CreateListEquipment(things, thingRep, attachments);
-                    model.IsEndPoint = true;
-                    model.Attachments = attachments.ToString();
-                    break;
+                    if (_commands.IsBookingEquipments)
+                    {
+                        model.Message = "Какое снаряжение вы хотите попросить?";
+                        model.BookModels = await CreateBookList(equipmentRep, categoryRep, userRep, command, message);
+                        break;
+                    }
+                    else
+                    {
+                        var attachments = new StringBuilder();
+                        var category = await categoryRep.GetAsync(x => x.Name == message);
+                        var things = await thingRep.GetAllAsync(x => x.CategotyId == category.Id);
+                        model.Message = await CreateListEquipment(things, thingRep, attachments);
+                        model.IsEndPoint = true;
+                        model.Attachments = attachments.ToString();
+                        break;
+                    }
                 }
                 case EnumCommand.About:
                 {
@@ -80,6 +90,18 @@ namespace ChatBotVK.Factories
                     model.IsEndPoint = true;
                     break;
                 }
+                case EnumCommand.BookEquipment:
+                    {
+                        model.Message = "Выберите категорию";
+                        model.NameByttons.AddRange(AddButtons(command));
+                        break;
+                    }
+                case EnumCommand.Book:
+                {
+                    model.Message = "Успех";
+                    model.IsEndPoint= true;
+                    break;
+                }
             }
 
             if (model.Parent == null || model.IsEndPoint)
@@ -88,7 +110,7 @@ namespace ChatBotVK.Factories
             }
             else
             {
-                model.NameByttons.AddRange(AddButtons(command));
+                model.NameByttons.AddRange(AddButtons(EnumCommand.Back));
             }
 
             if (model.NameByttons.Count > 0)
@@ -107,6 +129,7 @@ namespace ChatBotVK.Factories
                 case EnumCommand.Start:
                 {
                     buttons.Add(_commands.MainCommands.First(x => x.Value == EnumCommand.EquipmentList).Key);
+                    buttons.Add(_commands.MainCommands.First(x => x.Value == EnumCommand.BookEquipment).Key);
                     buttons.Add(_commands.MainCommands.First(x => x.Value == EnumCommand.About).Key);
                     break;
                 }
@@ -121,6 +144,26 @@ namespace ChatBotVK.Factories
                     {
                         buttons.Add(item.Key);
                     }
+                    break;
+                }
+                case EnumCommand.BookEquipment:
+                {
+                    foreach (var item in _commands.EquipmentCommands)
+                    {
+                        if (item.Value == EnumCommand.FullEquipmentList)
+                        {
+                            continue;
+                        }
+                        buttons.Add(item.Key);
+                    }
+                    break;
+                }
+                case EnumCommand.Equipment:
+                case EnumCommand.Clothes:
+                case EnumCommand.Weapon:
+                case EnumCommand.EquipmentCamp:
+                {
+                    buttons.Add(_commands.BookingEquipments.First(x => x.Value == enumCommand).Key);
                     break;
                 }
             }
@@ -219,6 +262,44 @@ namespace ChatBotVK.Factories
             }
 
             return messageEquip.ToString();
+        }
+
+        private async Task<List<Model>> CreateBookList(IRepository<Equipment> equipmentRep, IRepository<Category> categoryRep,
+            IRepository<User> userRep, EnumCommand command, string message)
+        {
+            var category = await categoryRep.GetAsync(x => x.Name == message);
+            var equipments = await equipmentRep.GetAllAsync(x => x.CategoryId == category.Id && !x.IsBooked);
+            var modelsEquipment = new List<Model>(equipments.Count());
+            foreach (var equipment in equipments)
+            {
+                var model = new Model();
+                var user = await userRep.GetAsync(x => x.Id == equipment.OwnerId);
+                var mes = new StringBuilder();
+                mes.AppendLine($"{user.Name} может дать вам {equipment.Name}");
+                var countMes = string.Empty;
+                if (equipment.Count == 1)
+                {
+                    countMes = "штука";
+                }
+                else
+                {
+                    if (equipment.Count > 1 && equipment.Count < 5)
+                    {
+                        countMes = "штуки";
+                    }
+                    else
+                    {
+                        countMes = "штук";
+                    }
+                }
+                mes.AppendLine($"Имеется {equipment.Count} {countMes}");
+                model.NameByttons.AddRange(AddButtons(command));
+
+                model.Keyboard = _keybordCreaterService.CreateKeyboard(model.NameByttons.ToArray(),
+                   Models.Enums.ButtonType.text, true, true);
+                modelsEquipment.Add(model);
+            }
+            return modelsEquipment;
         }
 
         private async Task<Thing> UploadPhoto(Thing thing, IRepository<Thing> repository)

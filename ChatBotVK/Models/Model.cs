@@ -12,5 +12,6 @@
         public string Message { get; set; }
         public TemplateModel? Template { get; set; }
         public string? Attachments { get; set; }
+        public List<Model>? BookModels { get; set; }
     }
 }

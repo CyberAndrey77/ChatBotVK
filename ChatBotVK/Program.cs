@@ -26,6 +26,7 @@ builder.Services.AddLogging();
 builder.Services.AddScoped<IRepository<Category>, CategoryRepository>();
 builder.Services.AddScoped<IRepository<Thing>, ThingRepository>();
 builder.Services.AddScoped<IRepository<User>, UserRepositoy>();
+builder.Services.AddScoped<IRepository<Equipment>, EquipmentRep>();
 builder.Services.AddSingleton<Command>();
 builder.Services.AddScoped<KeybordCreaterService>();
 builder.Services.AddScoped<MessageCreaterService>();
