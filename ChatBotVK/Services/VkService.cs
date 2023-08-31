@@ -63,6 +63,7 @@ namespace ChatBotVK.Services
                     {
                         _commands.IsMainCommans = true; 
                         _commands.IsEquipmentCommands = false;
+                        command = EnumCommand.Start;
                         var newModel = await _modelFactory.CreateModel(messageNew,
                             userId, model, _categoryRep, _thingRep, command);
                         model = newModel;

@@ -1,6 +1,4 @@
-﻿using static System.Net.Mime.MediaTypeNames;
-
-namespace ChatBotVK.Midellwares
+﻿namespace ChatBotVK.Midellwares
 {
     public class Handler
     {
