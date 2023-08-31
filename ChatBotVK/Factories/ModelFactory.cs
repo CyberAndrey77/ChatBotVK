@@ -25,7 +25,7 @@ namespace ChatBotVK.Factories
             _photoLoader = photoLoader;
         }
         public async Task<Model> CreateModel(string message, long userId, Model? parent,
-            IRepository<Category> categoryRep, IRepository<Thing> thingRep, EnumCommand command)
+            IRepository<Category> categoryRep, IRepository<Thing> thingRep, IRepository<User> userRep, EnumCommand command)
         {
             var model = new Model
             {
@@ -45,7 +45,7 @@ namespace ChatBotVK.Factories
                 {
                     model.Message = "Какой список вам нужен?";
                     var nameButtons = await categoryRep.GetAllAsync();
-                    model.NameByttons.AddRange(AddButtons(_commands));
+                    model.NameByttons.AddRange(AddButtons(command));
                     break;
                 }
                 case EnumCommand.FullEquipmentList:
@@ -70,15 +70,25 @@ namespace ChatBotVK.Factories
                     model.Attachments = attachments.ToString();
                     break;
                 }
+                case EnumCommand.About:
+                {
+                    var user = await userRep.GetAsync(x => x.Id == 178084478);
+                    model.Message = "Приложение разработанные для автоматизации" +
+                                    " получения информации по основным вопросам. " +
+                                    "Пока доступно только информация о снаряжении.\n" +
+                                    $"По всем вопросам писать ему {user.Link}";
+                    model.IsEndPoint = true;
+                    break;
+                }
             }
 
             if (model.Parent == null || model.IsEndPoint)
             {
-                model.NameByttons.Add(_commands.MainCommands.First(x => x.Value == EnumCommand.EquipmentList).Key);
+                model.NameByttons.AddRange(AddButtons(command));
             }
             else
             {
-                model.NameByttons.Add(_commands.MainCommands.First(x => x.Value == EnumCommand.Back).Key);
+                model.NameByttons.AddRange(AddButtons(command));
             }
 
             if (model.NameByttons.Count > 0)
@@ -89,19 +99,30 @@ namespace ChatBotVK.Factories
             return model;
         }
 
-        private List<string> AddButtons(Command command)
+        private List<string> AddButtons(EnumCommand enumCommand)
         {
             var buttons = new List<string>();
-            if (command.IsMainCommans)
+            switch (enumCommand)
             {
-                foreach (var item in command.EquipmentCommands)
+                case EnumCommand.Start:
                 {
-                    buttons.Add(item.Key);
+                    buttons.Add(_commands.MainCommands.First(x => x.Value == EnumCommand.EquipmentList).Key);
+                    buttons.Add(_commands.MainCommands.First(x => x.Value == EnumCommand.About).Key);
+                    break;
                 }
-            }
-            else if (command.IsEquipmentCommands)
-            {
-                
+                case EnumCommand.Back:
+                {
+                    buttons.Add(_commands.MainCommands.First(x => x.Value == EnumCommand.Back).Key);
+                    break;
+                }
+                case EnumCommand.EquipmentList:
+                {
+                    foreach (var item in _commands.EquipmentCommands)
+                    {
+                        buttons.Add(item.Key);
+                    }
+                    break;
+                }
             }
             return buttons;
         }

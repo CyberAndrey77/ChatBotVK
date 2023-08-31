@@ -16,6 +16,7 @@ namespace ChatBotVK.Commands
                 {"Бот", EnumCommand.Bot},
                 {"Начать", EnumCommand.Start},
                 {"Список снаряжения", EnumCommand.EquipmentList},
+                {"О боте", EnumCommand.About },
                 {"Назад", EnumCommand.Back}
             };
 
@@ -40,6 +41,7 @@ namespace ChatBotVK.Commands
         Equipment,
         Clothes,
         Weapon,
-        EquipmentCamp
+        EquipmentCamp,
+        About
     }
 }

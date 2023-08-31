@@ -10,6 +10,7 @@ namespace ChatBotVK.Services
     {
         private readonly IRepository<Category> _categoryRep;
         private readonly IRepository<Thing> _thingRep;
+        private readonly IRepository<User> _userRep;
         private readonly MessageCreaterService _messageCreaterService;
         private readonly ModelFactory _modelFactory;
         private readonly SessionService _sessionService;
@@ -19,13 +20,14 @@ namespace ChatBotVK.Services
 
         //private readonly List<string> _listCommand;
 
-        public VkService(IRepository<Category> categoryRep, IRepository<Thing> thingRep,
+        public VkService(IRepository<Category> categoryRep, IRepository<Thing> thingRep, IRepository<User> userRep,
             KeybordCreaterService keybordCreaterService, MessageCreaterService messageCreaterService,
-            ModelFactory modelFactory, SessionService sessionService, Commands.Command commands, 
+            ModelFactory modelFactory, SessionService sessionService, Command commands, 
             SenderMessageService senderMessage, ILogger<VkService> logger)
         {
             _categoryRep = categoryRep;
             _thingRep = thingRep;
+            _userRep = userRep;
             _messageCreaterService = messageCreaterService;
             _modelFactory = modelFactory;
             _sessionService = sessionService;
@@ -65,7 +67,7 @@ namespace ChatBotVK.Services
                         _commands.IsEquipmentCommands = false;
                         command = EnumCommand.Start;
                         var newModel = await _modelFactory.CreateModel(messageNew,
-                            userId, model, _categoryRep, _thingRep, command);
+                            userId, model, _categoryRep, _thingRep, _userRep, command);
                         model = newModel;
                         reset = model.IsEndPoint;
                     }
@@ -75,7 +77,7 @@ namespace ChatBotVK.Services
                         if (childModel == null)
                         {
                             childModel = await _modelFactory.CreateModel(messageNew, userId, model, 
-                                _categoryRep, _thingRep, command);
+                                _categoryRep, _thingRep, _userRep, command);
                             model.Childs.Add(childModel);
                         }
                         model = childModel;
